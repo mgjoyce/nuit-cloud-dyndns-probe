@@ -26,7 +26,14 @@ while true; do
   if [ -z "$ip" ]; then
     log "could not detect public IP from $IP_ECHO_URL" >&2
   else
-    status="$(curl -fsS -o /dev/null -w '%{http_code}' -X POST \
+    # Deliberately no -f here: with -f, curl still writes the -w status via
+    # this same stdout stream on an HTTP error response *and* returns
+    # non-zero, which would also trigger the `|| echo "000"` fallback below
+    # — doubling up into a mangled value like "401000". Without -f, curl
+    # only returns non-zero (triggering the fallback) on a genuine transport
+    # failure (DNS, connection refused, timeout), which is the only case
+    # "000" should mean.
+    status="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
       -H "Authorization: Bearer $DYNDNS_UPDATE_TOKEN" \
       -H 'content-type: application/json' \
       -d "{\"ip\":\"$ip\"}" \

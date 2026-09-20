@@ -10,4 +10,11 @@ RUN apk add --no-cache curl
 COPY probe.sh /probe.sh
 RUN chmod +x /probe.sh
 
+# Where probe.sh persists a self-healed update token (TOKEN_STATE_FILE,
+# default /data/update-token) — declared so a container recreated without
+# an explicit `-v` still keeps an anonymous volume across it, rather than
+# silently forgetting every self-heal the moment the container is replaced.
+# Mount a named volume instead (see README.md) to survive a full removal.
+VOLUME ["/data"]
+
 ENTRYPOINT ["/probe.sh"]

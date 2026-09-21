@@ -19,6 +19,12 @@ hostnames assigned will check in successfully but has nothing to update.
 
 ## Run it
 
+The easiest way is from the portal: register a container host under
+**Container Hosts**, then use **Deploy to a container host** on the token
+screen that appears after registering a probe (or rotating its tokens). That
+builds and starts this exact container on the host over SSH, with the
+tokens already filled in. To do it by hand instead:
+
 ```bash
 docker build -t nuit-cloud-dyndns-probe .
 docker run -d --name dyndns-probe \
@@ -78,6 +84,14 @@ gets back a brand-new update token, persists it to `TOKEN_STATE_FILE`, and
 retries the same report immediately. No manual redeploy needed, no
 assumption of terminal access to this host, ever, after the one time you
 first deployed it.
+
+One rule governs which update token wins at startup: a self-healed token
+persisted on the volume beats `DYNDNS_UPDATE_TOKEN` *unless* you've redeployed
+with a different `DYNDNS_UPDATE_TOKEN` than the one last adopted (remembered
+in `TOKEN_STATE_FILE.seed`) — that's you saying what you want (e.g. right
+after rotating it in the portal), and a stale persisted value from before
+that mustn't override it. Redeploying with the *same* env token keeps the
+self-healed one.
 
 The bootstrap token itself is deliberately not something this script can
 ever recover on its own — if it's wrong or gone, that's the one credential

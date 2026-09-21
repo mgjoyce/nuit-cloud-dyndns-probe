@@ -43,9 +43,23 @@ log() {
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $1"
 }
 
-# The persisted value always wins once one exists — it reflects the most
-# recent self-heal, which may have replaced whatever DYNDNS_UPDATE_TOKEN was
-# baked into this container's env at deploy time.
+# A persisted token (from a past self-heal) normally beats the
+# DYNDNS_UPDATE_TOKEN baked into this container's env — it's the newer of
+# the two. The exception: an operator who redeploys with a *different*
+# DYNDNS_UPDATE_TOKEN (e.g. right after rotating it in the portal) has just
+# said what they want, and a stale persisted value from before that must not
+# silently override it — with no bootstrap token in the env to recover with,
+# that would leave the probe stuck at 401 forever. So the env token last
+# adopted is remembered next to the state file (TOKEN_SEED_FILE); a
+# different one discards the persisted token and wins.
+TOKEN_SEED_FILE="${TOKEN_STATE_FILE}.seed"
+if [ -n "${DYNDNS_UPDATE_TOKEN:-}" ] && [ "$(cat "$TOKEN_SEED_FILE" 2>/dev/null || true)" != "$DYNDNS_UPDATE_TOKEN" ]; then
+  rm -f "$TOKEN_STATE_FILE"
+  # Non-fatal: an unwritable state directory just means self-heals won't
+  # survive a restart, which is already documented (see README.md).
+  printf '%s' "$DYNDNS_UPDATE_TOKEN" > "$TOKEN_SEED_FILE" 2>/dev/null || log "could not record $TOKEN_SEED_FILE — is $(dirname "$TOKEN_STATE_FILE") writable?" >&2
+fi
+
 if [ -s "$TOKEN_STATE_FILE" ]; then
   update_token="$(cat "$TOKEN_STATE_FILE")"
 else

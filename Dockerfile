@@ -8,13 +8,15 @@ FROM alpine:3.20
 RUN apk add --no-cache curl
 
 COPY probe.sh /probe.sh
-RUN chmod +x /probe.sh
+RUN chmod +x /probe.sh && mkdir -p /data
 
 # Where probe.sh persists a self-healed update token (TOKEN_STATE_FILE,
 # default /data/update-token) — declared so a container recreated without
 # an explicit `-v` still keeps an anonymous volume across it, rather than
 # silently forgetting every self-heal the moment the container is replaced.
 # Mount a named volume instead (see README.md) to survive a full removal.
+# The directory is created explicitly too: a runtime that ignores VOLUME (Apple
+# `container` 0.12.3 does) would otherwise have no /data to write the token to.
 VOLUME ["/data"]
 
 ENTRYPOINT ["/probe.sh"]

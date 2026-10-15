@@ -1,8 +1,8 @@
-# dyndns-management probe
+# nuit-cloud dyndns probe
 
 A small, standalone container that detects its host's current public IP and
-reports it to nuit-cloud on a loop, as one named probe — the client side of
-the [`dyndns-management`](../) capability. It knows nothing about Postgres,
+reports it to a [nuit-cloud](https://github.com/mgjoyce/nuit-cloud) deployment on a loop, as one
+named probe — the client side of nuit-cloud's dynamic DNS capability. It knows nothing about Postgres,
 Auth0, or any other part of the platform: just one probe name, its
 credentials, and a URL to POST to. Every hostname assigned to that probe in
 the portal gets updated from a single report — one probe container can keep
@@ -19,14 +19,11 @@ hostnames assigned will check in successfully but has nothing to update.
 
 ## Run it
 
-The easiest way is from the portal: register a container host under
-**Container Hosts**, then use **Deploy to a container host** on the token
-screen that appears after registering a probe (or rotating its tokens). That
-builds and starts this exact container on the host over SSH, with the
-tokens already filled in. To do it by hand instead:
+The easiest way is from the nuit-cloud portal: register a container host (or choose **Nuit Container Service**), then
+use **Deploy** on the token screen that appears after registering a probe (or rotating its tokens). That pulls this
+image and starts it with the tokens already filled in. By hand:
 
 ```bash
-docker build -t nuit-cloud-dyndns-probe .
 docker run -d --name dyndns-probe \
   -e NUIT_CLOUD_API_URL=https://nuit-cloud.example.com \
   -e DYNDNS_PROBE_NAME=home-network \
@@ -34,7 +31,7 @@ docker run -d --name dyndns-probe \
   -e DYNDNS_BOOTSTRAP_TOKEN=<the bootstrap token from registration> \
   -v dyndns-probe-data:/data \
   --restart unless-stopped \
-  nuit-cloud-dyndns-probe
+  ghcr.io/mgjoyce/nuit-cloud-dyndns-probe:latest
 ```
 
 The `-v dyndns-probe-data:/data` mount matters: it's where a self-healed
@@ -43,6 +40,16 @@ recreated, not just restarted. Skipping it doesn't break anything day to
 day, but every self-heal gets forgotten the next time the container is
 replaced, and the stale `DYNDNS_UPDATE_TOKEN` baked into this `docker run`
 takes over again.
+
+## Images
+
+Published to `ghcr.io/mgjoyce/nuit-cloud-dyndns-probe` for `linux/amd64` and `linux/arm64`: `latest` follows `main`,
+`vX.Y.Z` tags are releases, `sha-<short>` pins a commit. The image holds a shell script and curl and no secret. To build it
+yourself: `docker build -t nuit-cloud-dyndns-probe .`.
+
+A runtime without named volumes (nuit-cloud's Nuit Container Service today) keeps a self-healed update token only as long
+as the container lives; on a restart the bootstrap token in its environment mints a fresh one, as it does for any
+invalidated token.
 
 ## Environment variables
 
@@ -99,16 +106,6 @@ still requiring a manual redeploy, the same as any device that's never had
 working credentials at all. Rotate it in the portal (**Dynamic DNS → the
 probe → Rotate bootstrap token**) if you suspect it's been compromised.
 
-## On Nuit Container Service
+## Licence
 
-Nuit Container Service runs images only (no builder on the host) and has no named volumes yet. A probe deployed there
-(`placement: "pool"`) runs the published image the platform names in `DYNDNS_PROBE_IMAGE`, and keeps the self-healed update
-token only as long as its pod lives — on a restart the bootstrap token in its environment mints a fresh one, as it
-does for any invalidated token.
-
-The image is published to `ghcr.io/mgjoyce/nuit-cloud-dyndns-probe` (`latest` and `sha-<short>`, linux/amd64 and
-linux/arm64) by `.github/workflows/publish-probe.yml` whenever this directory changes on `main` (or by running the
-workflow by hand). It holds a shell script and curl, no secret, but a new GHCR package is **private**: either make it
-public (GitHub → Packages → nuit-cloud-dyndns-probe → Package settings → Change visibility) or give the host's
-containerd registry credentials for `ghcr.io`. Then set `DYNDNS_PROBE_IMAGE=ghcr.io/mgjoyce/nuit-cloud-dyndns-probe:latest`
-(or a `sha-…` tag, to pin it) in `.env` and redeploy.
+MIT — see [LICENSE](LICENSE).

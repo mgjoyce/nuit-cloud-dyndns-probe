@@ -104,5 +104,11 @@ probe → Rotate bootstrap token**) if you suspect it's been compromised.
 Nuit Container Service runs images only (no builder on the host) and has no named volumes yet. A probe deployed there
 (`placement: "pool"`) runs the published image the platform names in `DYNDNS_PROBE_IMAGE`, and keeps the self-healed update
 token only as long as its pod lives — on a restart the bootstrap token in its environment mints a fresh one, as it
-does for any invalidated token. Publish the image from this directory (`docker build`/`docker push`, for the
-architecture of the hosts: amd64 on `nuit-cloud-server-1`) and set `DYNDNS_PROBE_IMAGE` in `.env`.
+does for any invalidated token.
+
+The image is published to `ghcr.io/mgjoyce/nuit-cloud-dyndns-probe` (`latest` and `sha-<short>`, linux/amd64 and
+linux/arm64) by `.github/workflows/publish-probe.yml` whenever this directory changes on `main` (or by running the
+workflow by hand). It holds a shell script and curl, no secret, but a new GHCR package is **private**: either make it
+public (GitHub → Packages → nuit-cloud-dyndns-probe → Package settings → Change visibility) or give the host's
+containerd registry credentials for `ghcr.io`. Then set `DYNDNS_PROBE_IMAGE=ghcr.io/mgjoyce/nuit-cloud-dyndns-probe:latest`
+(or a `sha-…` tag, to pin it) in `.env` and redeploy.

@@ -98,3 +98,11 @@ ever recover on its own — if it's wrong or gone, that's the one credential
 still requiring a manual redeploy, the same as any device that's never had
 working credentials at all. Rotate it in the portal (**Dynamic DNS → the
 probe → Rotate bootstrap token**) if you suspect it's been compromised.
+
+## On Nuit Container Service
+
+Nuit Container Service runs images only (no builder on the host) and has no named volumes yet. A probe deployed there
+(`placement: "pool"`) runs the published image the platform names in `DYNDNS_PROBE_IMAGE`, and keeps the self-healed update
+token only as long as its pod lives — on a restart the bootstrap token in its environment mints a fresh one, as it
+does for any invalidated token. Publish the image from this directory (`docker build`/`docker push`, for the
+architecture of the hosts: amd64 on `nuit-cloud-server-1`) and set `DYNDNS_PROBE_IMAGE` in `.env`.

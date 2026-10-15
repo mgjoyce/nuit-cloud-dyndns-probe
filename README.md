@@ -31,7 +31,7 @@ docker run -d --name dyndns-probe \
   -e DYNDNS_BOOTSTRAP_TOKEN=<the bootstrap token from registration> \
   -v dyndns-probe-data:/data \
   --restart unless-stopped \
-  ghcr.io/mgjoyce/nuit-cloud-dyndns-probe:latest
+  ghcr.io/mgjoyce/dyndns-probe:latest
 ```
 
 The `-v dyndns-probe-data:/data` mount matters: it's where a self-healed
@@ -43,7 +43,7 @@ takes over again.
 
 ## Images
 
-Published to `ghcr.io/mgjoyce/nuit-cloud-dyndns-probe` for `linux/amd64` and `linux/arm64`: `latest` follows `main`,
+Published to `ghcr.io/mgjoyce/dyndns-probe` for `linux/amd64` and `linux/arm64`: `latest` follows `main`,
 `vX.Y.Z` tags are releases, `sha-<short>` pins a commit. The image holds a shell script and curl and no secret. To build it
 yourself: `docker build -t nuit-cloud-dyndns-probe .`.
 

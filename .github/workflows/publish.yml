@@ -1,6 +1,6 @@
 name: Publish image
 
-# Publishes ghcr.io/<owner>/nuit-cloud-dyndns-probe for linux/amd64 and linux/arm64: `latest` from main, vX.Y.Z from
+# Publishes ghcr.io/<owner>/dyndns-probe for linux/amd64 and linux/arm64: `latest` from main, vX.Y.Z from
 # release tags, sha-<short> always. Also builds (without pushing) on pull requests, and smoke-tests the image.
 on:
   push:
@@ -46,7 +46,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/nuit-cloud-dyndns-probe
+          images: ghcr.io/${{ github.repository_owner }}/dyndns-probe
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}

@@ -62,6 +62,7 @@ invalidated token.
 | `TOKEN_STATE_FILE`        | no       | `/data/update-token`        | Where a self-healed update token gets persisted — needs to be on the volume you mount (see above). |
 | `IP_ECHO_URL`             | no       | `https://api.ipify.org`     | Where to ask "what's my public IP" — swap for a self-hosted echo if you'd rather not call out to a third party. |
 | `CHECK_INTERVAL_SECONDS`  | no       | `300`                        | How often to check and (if changed) report.                            |
+| `PROBE_VERSION`           | no       | baked into the image (`dev` for a local build) | Sent as `X-Probe-Version` on every call so the platform can show which build is running. Informational only. |
 
 ## How it decides whether to update anything
 

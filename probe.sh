@@ -32,6 +32,9 @@ fi
 # or every self-heal is forgotten the moment this container is recreated
 # and the stale env var value takes over again. See README.md.
 TOKEN_STATE_FILE="${TOKEN_STATE_FILE:-/data/update-token}"
+# Which build this is (baked in by the image build; `dev` for a local one). Sent with every call home so the platform can
+# show it next to the probe — see README.md. Purely informational: the server ignores a value it does not like.
+PROBE_VERSION="${PROBE_VERSION:-dev}"
 
 # ipify is used here purely as a "what does the internet see as my source
 # IP" echo — nuit-cloud never talks to it, and no data beyond an empty GET
@@ -80,6 +83,7 @@ refresh_token() {
 
   response="$(curl -fsS -X POST \
     -H "Authorization: Bearer $DYNDNS_BOOTSTRAP_TOKEN" \
+    -H "X-Probe-Version: $PROBE_VERSION" \
     "$NUIT_CLOUD_API_URL/api/dyndns-probes/$DYNDNS_PROBE_NAME/refresh-token" 2>/dev/null || true)"
   if [ -z "$response" ]; then
     return 1
@@ -124,6 +128,7 @@ while true; do
     # "000" should mean.
     status="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
       -H "Authorization: Bearer $update_token" \
+      -H "X-Probe-Version: $PROBE_VERSION" \
       -H 'content-type: application/json' \
       -d "{\"ip\":\"$ip\"}" \
       "$NUIT_CLOUD_API_URL/api/dyndns-probes/$DYNDNS_PROBE_NAME/report-ip" 2>/dev/null || echo "000")"
@@ -138,6 +143,7 @@ while true; do
         log "self-heal succeeded — retrying this report with the new token"
         status="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
           -H "Authorization: Bearer $update_token" \
+          -H "X-Probe-Version: $PROBE_VERSION" \
           -H 'content-type: application/json' \
           -d "{\"ip\":\"$ip\"}" \
           "$NUIT_CLOUD_API_URL/api/dyndns-probes/$DYNDNS_PROBE_NAME/report-ip" 2>/dev/null || echo "000")"

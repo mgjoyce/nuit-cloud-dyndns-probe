@@ -7,6 +7,10 @@ FROM alpine:3.20
 
 RUN apk add --no-cache curl
 
+# The version this image reports to the platform (set by the publish workflow: the release tag, or sha-<short>).
+ARG PROBE_VERSION=dev
+ENV PROBE_VERSION=$PROBE_VERSION
+
 COPY probe.sh /probe.sh
 RUN chmod +x /probe.sh && mkdir -p /data
 
